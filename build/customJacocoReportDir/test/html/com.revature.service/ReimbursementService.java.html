@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReimbursementService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gradle</a> &gt; <a href="index.source.html" class="el_package">com.revature.service</a> &gt; <span class="el_source">ReimbursementService.java</span></div><h1>ReimbursementService.java</h1><pre class="source lang-java linenums">package com.revature.service;
+
+import com.google.cloud.storage.*;
+import com.revature.dao.ReimbursementDao;
+import com.revature.dto.ReimbursementDTO;
+import com.revature.exception.InvalidImageException;
+import com.revature.exception.ReimbursementNotFoundException;
+import com.revature.exception.UploadFailedException;
+import com.revature.model.Reimbursement;
+import org.apache.tika.Tika;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.UUID;
+
+public class ReimbursementService {
+
+   private ReimbursementDao reimbursementDao;
+
+<span class="nc" id="L22">    public ReimbursementService(){</span>
+<span class="nc" id="L23">        this.reimbursementDao = new ReimbursementDao();</span>
+<span class="nc" id="L24">    }</span>
+<span class="fc" id="L25">    public ReimbursementService(ReimbursementDao mockedObject) { this.reimbursementDao = mockedObject;}</span>
+
+    public List&lt;Reimbursement&gt; getAllReimbursements() throws SQLException, ClassNotFoundException {
+        List&lt;Reimbursement&gt; reimbursements;
+<span class="fc" id="L29">        reimbursements = this.reimbursementDao.getAllReimbursements();</span>
+<span class="fc" id="L30">        return reimbursements;</span>
+    }
+
+    public Reimbursement resolveReimbursement(String status, int managerId, String reimbursementId) throws SQLException, ReimbursementNotFoundException, ClassNotFoundException {
+       try {
+
+<span class="fc" id="L36">           int id = Integer.parseInt(reimbursementId);</span>
+<span class="fc" id="L37">           status = status.toUpperCase();</span>
+
+           //validate request param
+<span class="pc bpc" id="L40" title="1 of 4 branches missed.">           if (!status.equals(&quot;APPROVED&quot;) &amp;&amp; !status.equals(&quot;DENIED&quot;)) {</span>
+<span class="fc" id="L41">               throw new IllegalArgumentException(&quot;Choose to approve or deny the reimbursement. Invalid input: &quot; + status );</span>
+           }
+
+           //check if reimbursement exists
+<span class="fc" id="L45">           int statusId = this.reimbursementDao.checkReimbursement(id);</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">           if (statusId == -1) {</span>
+<span class="fc" id="L47">               throw new ReimbursementNotFoundException(&quot;Reimbursement with id &quot; + id + &quot; was not found&quot;);</span>
+           }
+
+           //check if it is PENDING
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">           if (statusId != 1) {</span>
+<span class="fc" id="L52">               throw new IllegalArgumentException(&quot;Reimbursement has been resolved. Changes are not allowed&quot;);</span>
+           }
+
+<span class="nc" id="L55">           Reimbursement reimbursement = this.reimbursementDao.resolveReimbursement(status, managerId, id);</span>
+<span class="nc" id="L56">           return reimbursement;</span>
+
+<span class="fc" id="L58">       } catch (NumberFormatException e) {</span>
+<span class="fc" id="L59">           throw new IllegalArgumentException(&quot;Reimbursement id must be a valid value&quot;);</span>
+       }
+
+    }
+
+    public List&lt;Reimbursement&gt; getSpecificEmployeeReimbursements (String userId) throws SQLException, ReimbursementNotFoundException, ClassNotFoundException {
+        try {
+<span class="fc" id="L66">            int employeeId = Integer.parseInt(userId);</span>
+            List&lt;Reimbursement&gt; reimbursements;
+<span class="fc" id="L68">            reimbursements = this.reimbursementDao.getSpecificEmployeeReimbursements(employeeId);</span>
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if (reimbursements == null) {</span>
+<span class="fc" id="L71">                throw new ReimbursementNotFoundException(&quot;No reimbursements found for employee with id &quot; + employeeId );</span>
+            }
+<span class="fc" id="L73">            return reimbursements;</span>
+<span class="fc" id="L74">        } catch (NumberFormatException e) {</span>
+<span class="fc" id="L75">            throw new IllegalArgumentException(&quot;Employee id must be a valid value&quot;);</span>
+        }
+
+    }
+
+    public String uploadToCloudStorage(InputStream fileInputStream) throws InvalidImageException, IOException, UploadFailedException {
+<span class="nc" id="L81">        Tika tika = new Tika();</span>
+<span class="nc" id="L82">        String mimeType = tika.detect(fileInputStream);</span>
+<span class="nc bnc" id="L83" title="All 6 branches missed.">        if (!mimeType.equals(&quot;image/jpeg&quot;) &amp;&amp; !mimeType.equals(&quot;image/png&quot;) &amp;&amp; !mimeType.equals(&quot;image/gif&quot;)) {</span>
+<span class="nc" id="L84">            throw new InvalidImageException(&quot;File format: JPEG, PNG, or GIF&quot;);</span>
+        }
+<span class="nc" id="L86">        String fileName = UUID.randomUUID().toString();</span>
+<span class="nc" id="L87">        String projectId = &quot;global-song-344220&quot;;</span>
+<span class="nc" id="L88">        String bucketName = &quot;employee_reimbursement&quot;;</span>
+        Storage storage =
+<span class="nc" id="L90">                StorageOptions.newBuilder().setProjectId(projectId).build().getService();</span>
+<span class="nc" id="L91">        BlobId blobId = BlobId.of(bucketName, fileName);</span>
+<span class="nc" id="L92">        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mimeType).build();</span>
+<span class="nc" id="L93">        Blob blob = storage.create(blobInfo, fileInputStream);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">       if(blob.getMediaLink()==null){</span>
+<span class="nc" id="L95">           throw new UploadFailedException(&quot;Upload failed&quot;);</span>
+       }
+<span class="nc" id="L97">        String publicUrl = &quot;https://storage.googleapis.com/employee_reimbursement/&quot;+fileName;</span>
+<span class="nc" id="L98">        return publicUrl;</span>
+    }
+
+    public Reimbursement addReimbursement(ReimbursementDTO reimbursementDTO, String userId) throws SQLException, ClassNotFoundException {
+<span class="fc" id="L102">        int employeeId = Integer.parseInt(userId);</span>
+
+<span class="fc" id="L104">        String type = reimbursementDTO.getType();</span>
+<span class="fc" id="L105">        type = type.toUpperCase();</span>
+<span class="pc bpc" id="L106" title="3 of 8 branches missed.">        if (!type.equals(&quot;LODGING&quot;) &amp;&amp; !type.equals(&quot;TRAVEL&quot;) &amp;&amp; !type.equals(&quot;FOOD&quot;) &amp;&amp; !type.equals(&quot;OTHER&quot;)  ) {</span>
+<span class="fc" id="L107">            throw new IllegalArgumentException(&quot;Valid reimbursement type are LODGING, TRAVEL, FOOD or OTHER. Invalid input: &quot; + type );</span>
+        }
+<span class="fc" id="L109">        reimbursementDTO.setType(type);</span>
+<span class="fc" id="L110">        Reimbursement reimbursement = this.reimbursementDao.addReimbursement(reimbursementDTO, employeeId);</span>
+
+<span class="fc" id="L112">       return reimbursement;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

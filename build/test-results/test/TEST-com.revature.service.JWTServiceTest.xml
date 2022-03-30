@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.revature.service.JWTServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2022-03-29T00:31:06" hostname="mac.local" time="1.495">
+  <properties/>
+  <testcase name="test_verifyEmployeeRole()" classname="com.revature.service.JWTServiceTest" time="1.463"/>
+  <testcase name="test_parseJwt()" classname="com.revature.service.JWTServiceTest" time="0.009"/>
+  <testcase name="test_verifyManagerRole()" classname="com.revature.service.JWTServiceTest" time="0.006"/>
+  <testcase name="test_createJWT()" classname="com.revature.service.JWTServiceTest" time="0.006"/>
+  <testcase name="test_verifyEmployeeId()" classname="com.revature.service.JWTServiceTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

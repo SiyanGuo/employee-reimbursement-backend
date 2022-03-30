@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReimbursementDao.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gradle</a> &gt; <a href="index.source.html" class="el_package">com.revature.dao</a> &gt; <span class="el_source">ReimbursementDao.java</span></div><h1>ReimbursementDao.java</h1><pre class="source lang-java linenums">package com.revature.dao;
+
+import com.revature.dto.ReimbursementDTO;
+import com.revature.model.Reimbursement;
+import com.revature.model.User;
+import com.revature.utility.ConnectionUtility;
+
+import java.math.BigDecimal;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L13">public class ReimbursementDao {</span>
+
+    public List&lt;Reimbursement&gt; getAllReimbursements() throws SQLException, ClassNotFoundException {
+<span class="nc" id="L16">        try (Connection con = ConnectionUtility.getConnection()) {</span>
+<span class="nc" id="L17">            List&lt;Reimbursement&gt; reimbursements = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L18">            String sql = &quot;select r.*, u.first_name as author_first, u.last_name as author_last, u2.first_name as resolver_first, u2.last_name as resolver_last &quot; +</span>
+                    &quot;from reimbursement_full r &quot; +
+                    &quot;left join users u &quot; +
+                    &quot;on r.author_id = u.id &quot; +
+                    &quot;left join users u2 &quot; +
+                    &quot;on r.resolver_id = u2.id &quot; +
+                    &quot;order by r.submitted_at desc&quot;;
+
+<span class="nc" id="L26">            try( PreparedStatement pstmt = con.prepareStatement(sql);){</span>
+<span class="nc" id="L27">                ResultSet rs = pstmt.executeQuery();</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">                while (rs.next()) {</span>
+                    //author
+<span class="nc" id="L30">                    int authorId = rs.getInt(&quot;author_id&quot;);</span>
+<span class="nc" id="L31">                    String authorFName = rs.getString(&quot;author_first&quot;);</span>
+<span class="nc" id="L32">                    String authorLName = rs.getString(&quot;author_last&quot;);</span>
+
+<span class="nc" id="L34">                    User author = new User(authorId, authorFName, authorLName);</span>
+
+                    //resolver
+<span class="nc" id="L37">                    int resolverId = rs.getInt(&quot;resolver_id&quot;);</span>
+<span class="nc" id="L38">                    String resolverFName = rs.getString(&quot;resolver_first&quot;);</span>
+<span class="nc" id="L39">                    String resolverLName = rs.getString(&quot;resolver_last&quot;);</span>
+
+<span class="nc" id="L41">                    User resolver = new User(resolverId, resolverFName, resolverLName);</span>
+
+                    //reimbursement
+<span class="nc" id="L44">                    int id = rs.getInt(&quot;id&quot;);</span>
+<span class="nc" id="L45">                    BigDecimal amount = rs.getBigDecimal(&quot;amount&quot;);</span>
+<span class="nc" id="L46">                    String description = rs.getString(&quot;description&quot;);</span>
+<span class="nc" id="L47">                    String type = rs.getString(&quot;type&quot;);</span>
+<span class="nc" id="L48">                    String submittedAt = rs.getString(&quot;submitted_at&quot;);</span>
+<span class="nc" id="L49">                    String status = rs.getString(&quot;status&quot;);</span>
+<span class="nc" id="L50">                    String resolvedAt = rs.getString(&quot;resolved_at&quot;);</span>
+<span class="nc" id="L51">                    String receipt = rs.getString(&quot;receipt&quot;);</span>
+
+<span class="nc" id="L53">                    Reimbursement r = new Reimbursement(id, amount, description, type, submittedAt, status, resolvedAt, receipt, author, resolver);</span>
+
+<span class="nc" id="L55">                    reimbursements.add(r);</span>
+<span class="nc" id="L56">                }</span>
+<span class="nc" id="L57">                return reimbursements;</span>
+            }
+
+        }
+    }
+
+    public Reimbursement resolveReimbursement(String status, int managerId, int reimbursementId) throws SQLException, ClassNotFoundException {
+<span class="nc" id="L64">        try (Connection con = ConnectionUtility.getConnection()) {</span>
+<span class="nc" id="L65">            con.setAutoCommit(false);</span>
+<span class="nc" id="L66">            String sql = &quot;update reimbursement &quot; +</span>
+                    &quot;set status_id = (select rs.id &quot; +
+                    &quot;from reimb_status rs &quot; +
+                    &quot;where rs.status = ? ), &quot; +
+                    &quot;resolved_at = current_timestamp, &quot; +
+                    &quot;resolver_id= ? &quot; +
+                    &quot;where id = ?&quot;;
+
+<span class="nc" id="L74">            try ( PreparedStatement pstmt = con.prepareStatement(sql);){</span>
+
+<span class="nc" id="L76">                pstmt.setString(1, status);</span>
+<span class="nc" id="L77">                pstmt.setInt(2, managerId);</span>
+<span class="nc" id="L78">                pstmt.setInt(3, reimbursementId);</span>
+
+<span class="nc" id="L80">                pstmt.executeUpdate();</span>
+
+<span class="nc" id="L82">                String sql2 = &quot;select r.*, u.first_name as author_first, u.last_name as author_last, u2.first_name as resolver_first, u2.last_name as resolver_last &quot; +</span>
+                        &quot;from reimbursement_full r &quot; +
+                        &quot;left join users u &quot; +
+                        &quot;on r.author_id = u.id &quot; +
+                        &quot;left join users u2 &quot; +
+                        &quot;on r.resolver_id = u2.id &quot; +
+                        &quot;where r.id = ? &quot;;
+
+<span class="nc" id="L90">                try(PreparedStatement pstmt2 = con.prepareStatement(sql2);){</span>
+<span class="nc" id="L91">                    pstmt2.setInt(1, reimbursementId);</span>
+<span class="nc" id="L92">                    ResultSet rs = pstmt2.executeQuery();</span>
+
+<span class="nc" id="L94">                    rs.next();</span>
+                    //author
+<span class="nc" id="L96">                    int authorId = rs.getInt(&quot;author_id&quot;);</span>
+<span class="nc" id="L97">                    String authorFName = rs.getString(&quot;author_first&quot;);</span>
+<span class="nc" id="L98">                    String authorLName = rs.getString(&quot;author_last&quot;);</span>
+
+<span class="nc" id="L100">                    User author = new User(authorId, authorFName, authorLName);</span>
+
+                    //resolver
+<span class="nc" id="L103">                    int resolverId = rs.getInt(&quot;resolver_id&quot;);</span>
+<span class="nc" id="L104">                    String resolverFName = rs.getString(&quot;resolver_first&quot;);</span>
+<span class="nc" id="L105">                    String resolverLName = rs.getString(&quot;resolver_last&quot;);</span>
+
+<span class="nc" id="L107">                    User resolver = new User(resolverId, resolverFName, resolverLName);</span>
+
+                    //reimbursement
+<span class="nc" id="L110">                    int id = rs.getInt(&quot;id&quot;);</span>
+<span class="nc" id="L111">                    BigDecimal amount = rs.getBigDecimal(&quot;amount&quot;);</span>
+<span class="nc" id="L112">                    String description = rs.getString(&quot;description&quot;);</span>
+<span class="nc" id="L113">                    String type = rs.getString(&quot;type&quot;);</span>
+<span class="nc" id="L114">                    String submittedAt = rs.getString(&quot;submitted_at&quot;);</span>
+<span class="nc" id="L115">                    String status2 = rs.getString(&quot;status&quot;);</span>
+<span class="nc" id="L116">                    String resolvedAt = rs.getString(&quot;resolved_at&quot;);</span>
+<span class="nc" id="L117">                    String receipt = rs.getString(&quot;receipt&quot;);</span>
+
+<span class="nc" id="L119">                    Reimbursement r = new Reimbursement(id, amount, description, type, submittedAt, status2, resolvedAt, receipt, author, resolver);</span>
+
+<span class="nc" id="L121">                    con.commit();</span>
+<span class="nc" id="L122">                    return r;</span>
+                }
+            }
+        }
+    }
+
+    public int checkReimbursement(int reimbursementId) throws SQLException, ClassNotFoundException {
+<span class="nc" id="L129">        try(Connection con = ConnectionUtility.getConnection()){</span>
+<span class="nc" id="L130">            String sql = &quot;select status_id &quot; +</span>
+                    &quot;from reimbursement &quot; +
+                    &quot;where id = ?&quot;;
+
+<span class="nc" id="L134">            try(  PreparedStatement pstmt = con.prepareStatement(sql);){</span>
+<span class="nc" id="L135">                pstmt.setInt(1, reimbursementId);</span>
+<span class="nc" id="L136">                ResultSet rs = pstmt.executeQuery();</span>
+
+<span class="nc bnc" id="L138" title="All 2 branches missed.">                if (rs.next()) {</span>
+<span class="nc" id="L139">                    int statusId = rs.getInt(&quot;status_id&quot;);</span>
+<span class="nc" id="L140">                    return statusId;</span>
+                }
+            }
+
+<span class="nc" id="L144">            return -1;</span>
+        }
+    }
+
+    public List&lt;Reimbursement&gt; getSpecificEmployeeReimbursements(int employeeId) throws SQLException, ClassNotFoundException {
+<span class="nc" id="L149">        try (Connection con = ConnectionUtility.getConnection()) {</span>
+<span class="nc" id="L150">            String sql = &quot;select r.*, u.first_name as author_first, u.last_name as author_last, u2.first_name as resolver_first, u2.last_name as resolver_last\n&quot; +</span>
+                    &quot;from reimbursement_full r &quot; +
+                    &quot;left join users u &quot; +
+                    &quot;on r.author_id = u.id &quot; +
+                    &quot;left join users u2 &quot; +
+                    &quot;on r.resolver_id = u2.id &quot; +
+                    &quot;where r.author_id = ?&quot; +
+                    &quot;order by r.submitted_at desc&quot;;
+<span class="nc" id="L158">            List&lt;Reimbursement&gt; reimbursements = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L160">            try (PreparedStatement pstmt = con.prepareStatement(sql)){</span>
+<span class="nc" id="L161">                pstmt.setInt(1, employeeId);</span>
+<span class="nc" id="L162">                ResultSet rs = pstmt.executeQuery();</span>
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">                if (!rs.next()) {return null;}</span>
+
+             do {
+                    //author
+<span class="nc" id="L168">                    int authorId = rs.getInt(&quot;author_id&quot;);</span>
+<span class="nc" id="L169">                    String authorFName = rs.getString(&quot;author_first&quot;);</span>
+<span class="nc" id="L170">                    String authorLName = rs.getString(&quot;author_last&quot;);</span>
+
+<span class="nc" id="L172">                    User author = new User(authorId, authorFName, authorLName);</span>
+
+                    //resolver
+<span class="nc" id="L175">                    int resolverId = rs.getInt(&quot;resolver_id&quot;);</span>
+<span class="nc" id="L176">                    String resolverFName = rs.getString(&quot;resolver_first&quot;);</span>
+<span class="nc" id="L177">                    String resolverLName = rs.getString(&quot;resolver_last&quot;);</span>
+
+<span class="nc" id="L179">                    User resolver = new User(resolverId, resolverFName, resolverLName);</span>
+
+                    //reimbursement
+<span class="nc" id="L182">                    int id = rs.getInt(&quot;id&quot;);</span>
+<span class="nc" id="L183">                    BigDecimal amount = rs.getBigDecimal(&quot;amount&quot;);</span>
+<span class="nc" id="L184">                    String description = rs.getString(&quot;description&quot;);</span>
+<span class="nc" id="L185">                    String type = rs.getString(&quot;type&quot;);</span>
+<span class="nc" id="L186">                    String submittedAt = rs.getString(&quot;submitted_at&quot;);</span>
+<span class="nc" id="L187">                    String status = rs.getString(&quot;status&quot;);</span>
+<span class="nc" id="L188">                    String resolvedAt = rs.getString(&quot;resolved_at&quot;);</span>
+<span class="nc" id="L189">                    String receipt = rs.getString(&quot;receipt&quot;);</span>
+
+<span class="nc" id="L191">                    Reimbursement r = new Reimbursement(id, amount, description, type, submittedAt, status, resolvedAt, receipt, author, resolver);</span>
+
+<span class="nc" id="L193">                    reimbursements.add(r);</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">                }  while (rs.next());</span>
+<span class="nc" id="L195">                return reimbursements;</span>
+            }
+        }
+    }
+
+    public Reimbursement addReimbursement(ReimbursementDTO reimbursementDTO, int employeeId) throws SQLException, ClassNotFoundException {
+<span class="nc" id="L201">        try (Connection con = ConnectionUtility.getConnection()) {</span>
+<span class="nc" id="L202">            con.setAutoCommit(false);</span>
+<span class="nc" id="L203">            String sql = &quot;insert into reimbursement (amount, author_id, description, type_id, submitted_at, receipt) &quot; +</span>
+                    &quot;values &quot; +
+                    &quot;(?, ?, ?, &quot; +
+                    &quot;(select rt.id from reimb_type rt where rt.type = ?), &quot; +
+                    &quot;current_timestamp, ?)&quot;;
+<span class="nc" id="L208">            try( PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){</span>
+<span class="nc" id="L209">                pstmt.setBigDecimal(1, reimbursementDTO.getAmount());</span>
+<span class="nc" id="L210">                pstmt.setInt(2, employeeId);</span>
+<span class="nc" id="L211">                pstmt.setString(3, reimbursementDTO.getDescription());</span>
+<span class="nc" id="L212">                pstmt.setString(4, reimbursementDTO.getType());</span>
+<span class="nc" id="L213">                pstmt.setString(5, reimbursementDTO.getReceipt());</span>
+
+<span class="nc" id="L215">                pstmt.executeUpdate();</span>
+<span class="nc" id="L216">                ResultSet rs = pstmt.getGeneratedKeys();</span>
+<span class="nc" id="L217">                rs.next();</span>
+<span class="nc" id="L218">                int reimbursementId = rs.getInt(1);</span>
+
+<span class="nc" id="L220">                String sql2 = &quot;select r.*, u.first_name as author_first, u.last_name as author_last, u2.first_name as resolver_first, u2.last_name as resolver_last\n&quot; +</span>
+                        &quot;from reimbursement_full r\n&quot; +
+                        &quot;left join users u &quot; +
+                        &quot;on r.author_id = u.id &quot; +
+                        &quot;left join users u2 &quot; +
+                        &quot;on r.resolver_id = u2.id &quot; +
+                        &quot;where r.id = ? &quot;;
+
+<span class="nc" id="L228">                try(PreparedStatement pstmt2 = con.prepareStatement(sql2)) {</span>
+<span class="nc" id="L229">                    pstmt2.setInt(1, reimbursementId);</span>
+<span class="nc" id="L230">                    ResultSet rs2 = pstmt2.executeQuery();</span>
+<span class="nc" id="L231">                    rs2.next();</span>
+                    //author
+<span class="nc" id="L233">                    int authorId = rs2.getInt(&quot;author_id&quot;);</span>
+<span class="nc" id="L234">                    String authorFName = rs2.getString(&quot;author_first&quot;);</span>
+<span class="nc" id="L235">                    String authorLName = rs2.getString(&quot;author_last&quot;);</span>
+
+<span class="nc" id="L237">                    User author = new User(authorId, authorFName, authorLName);</span>
+
+                    //resolver
+<span class="nc" id="L240">                    int resolverId = rs2.getInt(&quot;resolver_id&quot;);</span>
+<span class="nc" id="L241">                    String resolverFName = rs2.getString(&quot;resolver_first&quot;);</span>
+<span class="nc" id="L242">                    String resolverLName = rs2.getString(&quot;resolver_last&quot;);</span>
+
+<span class="nc" id="L244">                    User resolver = new User(resolverId, resolverFName, resolverLName);</span>
+
+                    //reimbursement
+<span class="nc" id="L247">                    int id = rs2.getInt(&quot;id&quot;);</span>
+<span class="nc" id="L248">                    BigDecimal amount = rs2.getBigDecimal(&quot;amount&quot;);</span>
+<span class="nc" id="L249">                    String description = rs2.getString(&quot;description&quot;);</span>
+<span class="nc" id="L250">                    String type = rs2.getString(&quot;type&quot;);</span>
+<span class="nc" id="L251">                    String submittedAt = rs2.getString(&quot;submitted_at&quot;);</span>
+<span class="nc" id="L252">                    String status2 = rs2.getString(&quot;status&quot;);</span>
+<span class="nc" id="L253">                    String resolvedAt = rs2.getString(&quot;resolved_at&quot;);</span>
+<span class="nc" id="L254">                    String receipt = rs2.getString(&quot;receipt&quot;);</span>
+
+<span class="nc" id="L256">                    Reimbursement r = new Reimbursement(id, amount, description, type, submittedAt, status2, resolvedAt, receipt, author, resolver);</span>
+
+<span class="nc" id="L258">                    con.commit();</span>
+<span class="nc" id="L259">                    return r;</span>
+                }
+            }
+
+        }
+    }
+}
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

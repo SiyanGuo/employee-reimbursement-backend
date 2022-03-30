@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gradle</a> &gt; <a href="index.source.html" class="el_package">com.revature.controller</a> &gt; <span class="el_source">AuthenticationController.java</span></div><h1>AuthenticationController.java</h1><pre class="source lang-java linenums">package com.revature.controller;
+
+import com.revature.dto.LoginDTO;
+import com.revature.dto.UserResponseDTO;
+import com.revature.model.User;
+import com.revature.service.JWTService;
+import com.revature.service.UserService;
+import io.javalin.Javalin;
+import io.javalin.http.Handler;
+
+import javax.security.auth.login.FailedLoginException;
+import javax.servlet.http.HttpSession;
+
+public class AuthenticationController implements Controller {
+
+    private UserService userService;
+    private JWTService jwtService;
+
+<span class="nc" id="L19">    public AuthenticationController() {</span>
+<span class="nc" id="L20">        this.userService = new UserService();</span>
+<span class="nc" id="L21">        this.jwtService = new JWTService();</span>
+<span class="nc" id="L22">    }</span>
+
+<span class="nc" id="L24">    private Handler login = ctx -&gt; {</span>
+
+<span class="nc" id="L26">        LoginDTO loginInfo = ctx.bodyAsClass(LoginDTO.class);</span>
+
+<span class="nc" id="L28">        User user = userService.login(loginInfo.getUsername(), loginInfo.getPassword());</span>
+
+<span class="nc" id="L30">        String jwt = this.jwtService.createJWT(user);</span>
+
+<span class="nc" id="L32">        ctx.header(&quot;Access-Control-Expose-Headers&quot;, &quot;*&quot;);</span>
+<span class="nc" id="L33">        ctx.header(&quot;Token&quot;, jwt);</span>
+
+<span class="nc" id="L35">        UserResponseDTO userResponseDTO = new UserResponseDTO(user.getId(), user.getUsername(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getUserRole());</span>
+<span class="nc" id="L36">        ctx.json(userResponseDTO);</span>
+<span class="nc" id="L37">    };</span>
+
+<span class="nc" id="L39">    private Handler signup = ctx -&gt; {</span>
+
+<span class="nc" id="L41">        User signedUpUser = ctx.bodyAsClass(User.class);</span>
+
+<span class="nc" id="L43">        User user = userService.signUp(signedUpUser);</span>
+<span class="nc" id="L44">        String jwt = this.jwtService.createJWT(user);</span>
+
+<span class="nc" id="L46">        ctx.header(&quot;Access-Control-Expose-Headers&quot;, &quot;*&quot;);</span>
+<span class="nc" id="L47">        ctx.header(&quot;Token&quot;, jwt);</span>
+<span class="nc" id="L48">        UserResponseDTO userResponseDTO = new UserResponseDTO(user.getId(), user.getUsername(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getUserRole());</span>
+<span class="nc" id="L49">        ctx.json(userResponseDTO);</span>
+<span class="nc" id="L50">    };</span>
+
+    @Override
+    public void mapEndpoints(Javalin app) {
+<span class="nc" id="L54">        app.post(&quot;/login&quot;, login);</span>
+<span class="nc" id="L55">        app.post(&quot;/signup&quot;,signup);</span>
+<span class="nc" id="L56">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

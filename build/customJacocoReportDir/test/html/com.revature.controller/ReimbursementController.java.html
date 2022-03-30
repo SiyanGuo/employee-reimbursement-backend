@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReimbursementController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gradle</a> &gt; <a href="index.source.html" class="el_package">com.revature.controller</a> &gt; <span class="el_source">ReimbursementController.java</span></div><h1>ReimbursementController.java</h1><pre class="source lang-java linenums">package com.revature.controller;
+
+import com.revature.dto.ReimbursementDTO;
+import com.revature.model.Reimbursement;
+import com.revature.service.JWTService;
+import com.revature.service.ReimbursementService;
+import io.javalin.Javalin;
+import io.javalin.http.Handler;
+import io.javalin.http.UnauthorizedResponse;
+import io.javalin.http.UploadedFile;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+
+import java.io.InputStream;
+import java.util.List;
+
+
+public class ReimbursementController implements Controller{
+
+    private JWTService jwtService;
+    private ReimbursementService reimbursementService;
+
+
+<span class="nc" id="L24">    public ReimbursementController() {</span>
+<span class="nc" id="L25">        this.jwtService = new JWTService();</span>
+<span class="nc" id="L26">        this.reimbursementService = new ReimbursementService();</span>
+<span class="nc" id="L27">    }</span>
+
+<span class="nc" id="L29">    private Handler getAllReimbursements = ctx -&gt;{</span>
+
+<span class="nc bnc" id="L31" title="All 2 branches missed.">        if(ctx.header(&quot;Authorization&quot;)==null) {</span>
+<span class="nc" id="L32">            throw new UnauthorizedResponse(&quot;You must be logged in to access this endpoint&quot;);</span>
+        }
+<span class="nc" id="L34">        String jwt = ctx.header(&quot;Authorization&quot;).split(&quot; &quot;)[1];</span>
+<span class="nc" id="L35">        Jws&lt;Claims&gt; token = this.jwtService.parseJwt(jwt);</span>
+
+<span class="nc" id="L37">        this.jwtService.verifyManager(token);</span>
+<span class="nc" id="L38">        List&lt;Reimbursement&gt; reimbursements = this.reimbursementService.getAllReimbursements();</span>
+
+<span class="nc" id="L40">        ctx.json(reimbursements);</span>
+<span class="nc" id="L41">    };</span>
+
+<span class="nc" id="L43">    private Handler resolveReimbursement = ctx -&gt;{</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        if(ctx.header(&quot;Authorization&quot;)==null) {</span>
+<span class="nc" id="L45">            throw new UnauthorizedResponse(&quot;You must be logged in to access this endpoint&quot;);</span>
+        }
+<span class="nc" id="L47">        String jwt = ctx.header(&quot;Authorization&quot;).split(&quot; &quot;)[1];</span>
+
+<span class="nc" id="L49">        Jws&lt;Claims&gt; token = this.jwtService.parseJwt(jwt);</span>
+
+<span class="nc" id="L51">        this.jwtService.verifyManager(token);</span>
+<span class="nc" id="L52">        int trainerId = token.getBody().get(&quot;user_id&quot;, Integer.class);</span>
+<span class="nc" id="L53">        String reimbursementId = ctx.pathParam(&quot;reimbursement_id&quot;);</span>
+
+<span class="nc" id="L55">        String status = ctx.formParam(&quot;status&quot;);</span>
+<span class="nc" id="L56">        Reimbursement reimbursement = this.reimbursementService.resolveReimbursement(status, trainerId, reimbursementId);</span>
+
+<span class="nc" id="L58">        ctx.json(reimbursement);</span>
+<span class="nc" id="L59">    };</span>
+
+<span class="nc" id="L61">    private Handler getSpecificEmployeeReimbursements = ctx -&gt;  {</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if(ctx.header(&quot;Authorization&quot;)==null) {</span>
+<span class="nc" id="L63">            throw new UnauthorizedResponse(&quot;You must be logged in to access this endpoint&quot;);</span>
+        }
+<span class="nc" id="L65">        String jwt = ctx.header(&quot;Authorization&quot;).split(&quot; &quot;)[1];</span>
+<span class="nc" id="L66">        Jws&lt;Claims&gt; token = this.jwtService.parseJwt(jwt);</span>
+<span class="nc" id="L67">        String userId = ctx.pathParam(&quot;user_id&quot;);</span>
+
+<span class="nc" id="L69">        this.jwtService.verifyEmployee(token, userId);</span>
+<span class="nc" id="L70">        List&lt;Reimbursement&gt; reimbursements = this.reimbursementService.getSpecificEmployeeReimbursements(userId);</span>
+<span class="nc" id="L71">        ctx.json(reimbursements);</span>
+<span class="nc" id="L72">    };</span>
+
+<span class="nc" id="L74">    private Handler imageUpload = (ctx) -&gt;{</span>
+
+<span class="nc" id="L76">        UploadedFile file = ctx.uploadedFile(&quot;image&quot;);</span>
+<span class="nc" id="L77">        InputStream fileInputStream = file.getContent();</span>
+<span class="nc" id="L78">        String uploadedFileUrl = this.reimbursementService.uploadToCloudStorage(fileInputStream);</span>
+<span class="nc" id="L79">        ctx.header(&quot;Access-Control-Expose-Headers&quot;, &quot;*&quot;);</span>
+<span class="nc" id="L80">        ctx.header(&quot;Image&quot;, uploadedFileUrl);</span>
+<span class="nc" id="L81">        ctx.result(&quot;Image uploaded&quot;);</span>
+<span class="nc" id="L82">    };</span>
+
+<span class="nc" id="L84">    private Handler addReimbursement = ctx -&gt;{</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if(ctx.header(&quot;Authorization&quot;)==null) {</span>
+<span class="nc" id="L86">            throw new UnauthorizedResponse(&quot;You must be logged in to access this endpoint&quot;);</span>
+        }
+<span class="nc" id="L88">        String jwt = ctx.header(&quot;Authorization&quot;).split(&quot; &quot;)[1];</span>
+<span class="nc" id="L89">        Jws&lt;Claims&gt; token = this.jwtService.parseJwt(jwt);</span>
+<span class="nc" id="L90">        String userId = ctx.pathParam(&quot;user_id&quot;);</span>
+
+<span class="nc" id="L92">        this.jwtService.verifyEmployee(token, userId);</span>
+<span class="nc" id="L93">        ReimbursementDTO reimbursementDTO = ctx.bodyAsClass(ReimbursementDTO.class);</span>
+<span class="nc" id="L94">        Reimbursement reimbursements = this.reimbursementService.addReimbursement(reimbursementDTO, userId);</span>
+
+<span class="nc" id="L96">        ctx.status(201);</span>
+<span class="nc" id="L97">        ctx.json(reimbursements);</span>
+
+<span class="nc" id="L99">    };</span>
+
+    @Override
+    public void mapEndpoints(Javalin app) {
+<span class="nc" id="L103">        app.get(&quot;/reimbursements&quot;, getAllReimbursements); //manager only</span>
+<span class="nc" id="L104">        app.patch(&quot;/reimbursements/{reimbursement_id}&quot;,resolveReimbursement); //manager only</span>
+<span class="nc" id="L105">        app.get(&quot;/users/{user_id}/reimbursements&quot;,getSpecificEmployeeReimbursements); //employee only</span>
+<span class="nc" id="L106">        app.post(&quot;/reimbursements/image-upload&quot;, imageUpload);</span>
+<span class="nc" id="L107">        app.post(&quot;/users/{user_id}/reimbursements&quot;, addReimbursement); //employee only</span>
+<span class="nc" id="L108">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

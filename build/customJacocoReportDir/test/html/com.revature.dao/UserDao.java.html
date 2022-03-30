@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserDao.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gradle</a> &gt; <a href="index.source.html" class="el_package">com.revature.dao</a> &gt; <span class="el_source">UserDao.java</span></div><h1>UserDao.java</h1><pre class="source lang-java linenums">package com.revature.dao;
+
+import com.revature.model.User;
+import com.revature.utility.ConnectionUtility;
+
+import java.sql.*;
+
+public class UserDao {
+<span class="fc" id="L9">    public UserDao(){</span>
+<span class="fc" id="L10">    }</span>
+
+    public User getUserByUsername(String username) throws SQLException, ClassNotFoundException {
+<span class="nc" id="L13">        try (Connection con = ConnectionUtility.getConnection()) {</span>
+<span class="nc" id="L14">            String sql = &quot;select * from user_with_user_role &quot; +</span>
+                    &quot;where user_with_user_role.username = ? &quot;;
+
+<span class="nc" id="L17">            try( PreparedStatement pstmt = con.prepareStatement(sql)){</span>
+<span class="nc" id="L18">                pstmt.setString(1, username);;</span>
+
+<span class="nc" id="L20">                ResultSet rs = pstmt.executeQuery();</span>
+
+<span class="nc bnc" id="L22" title="All 2 branches missed.">                if (rs.next()) {</span>
+<span class="nc" id="L23">                    int id = rs.getInt(&quot;user_id&quot;);</span>
+<span class="nc" id="L24">                    String un = rs.getString(&quot;username&quot;);</span>
+<span class="nc" id="L25">                    String pw = rs.getString(&quot;password&quot;);</span>
+<span class="nc" id="L26">                    String fName = rs.getString(&quot;first_name&quot;);</span>
+<span class="nc" id="L27">                    String lName = rs.getString(&quot;last_name&quot;);</span>
+<span class="nc" id="L28">                    String email = rs.getString(&quot;email&quot;);</span>
+<span class="nc" id="L29">                    String role = rs.getString(&quot;user_role&quot;);</span>
+
+<span class="nc" id="L31">                    return new User(id, un, pw, fName, lName, email, role);</span>
+                }
+<span class="nc" id="L33">                return null;</span>
+            }
+        }
+    }
+
+    public User signUp(User user) throws SQLException, ClassNotFoundException {
+<span class="nc" id="L39">        try(Connection con = ConnectionUtility.getConnection()){</span>
+<span class="nc" id="L40">            String sql =  &quot;insert into users (username, password, first_name, last_name, email, user_role_id) &quot;+</span>
+        &quot;values (?, ?, ?, ?, ?, (select ur.id from user_role ur where ur.role = ?))&quot;;
+<span class="nc" id="L42">            try(PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){</span>
+<span class="nc" id="L43">                pstmt.setString(1,user.getUsername());</span>
+<span class="nc" id="L44">                pstmt.setString(2,user.getPassword());</span>
+<span class="nc" id="L45">                pstmt.setString(3,user.getFirstName());</span>
+<span class="nc" id="L46">                pstmt.setString(4,user.getLastName());</span>
+<span class="nc" id="L47">                pstmt.setString(5,user.getEmail());</span>
+<span class="nc" id="L48">                pstmt.setString(6,user.getUserRole());</span>
+
+<span class="nc" id="L50">                pstmt.executeUpdate();</span>
+<span class="nc" id="L51">                ResultSet rs = pstmt.getGeneratedKeys();</span>
+<span class="nc" id="L52">                rs.next();</span>
+<span class="nc" id="L53">                int userId = rs.getInt(1);</span>
+
+<span class="nc" id="L55">                return new User(userId,user.getUsername(), user.getPassword(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getUserRole());</span>
+            }
+        }
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
