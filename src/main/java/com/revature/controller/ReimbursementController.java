@@ -105,5 +105,6 @@ public class ReimbursementController implements Controller{
         app.get("/users/{user_id}/reimbursements",getSpecificEmployeeReimbursements); //employee only
         app.post("/reimbursements/image-upload", imageUpload);
         app.post("/users/{user_id}/reimbursements", addReimbursement); //employee only
+        app.get("/test", (ctx) -> ctx.result("testing new end points for jenkins"));
     }
 }
