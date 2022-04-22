@@ -15,21 +15,18 @@ import org.slf4j.LoggerFactory;
 
     public static void main(String[] args) {
 
-<span class="nc" id="L18">        Javalin app = Javalin.create((config) -&gt; {</span>
-<span class="nc" id="L19">            config.enableCorsForAllOrigins();</span>
-<span class="nc" id="L20">        });</span>
-<span class="nc" id="L21">        app.before((ctx) -&gt; {</span>
-<span class="nc" id="L22">            logger.info(ctx.method() + &quot; request received for &quot; + ctx.path());</span>
-<span class="nc" id="L23">        });</span>
-<span class="nc" id="L24">        mapControllers(app, new AuthenticationController(), new ReimbursementController(), new ExceptionController());</span>
+<span class="nc" id="L18">        Javalin app = Javalin.create(config -&gt; config.enableCorsForAllOrigins());</span>
+<span class="nc" id="L19">        app.before(ctx -&gt; logger.info(ctx.method() + &quot; request received for &quot; + ctx.path()));</span>
 
-<span class="nc" id="L26">        app.start(8081);</span>
-<span class="nc" id="L27">    }</span>
+<span class="nc" id="L21">        mapControllers(app, new AuthenticationController(), new ReimbursementController(), new ExceptionController());</span>
+
+<span class="nc" id="L23">        app.start(8081);</span>
+<span class="nc" id="L24">    }</span>
 
     public static void mapControllers(Javalin app, Controller... controllers) {
-<span class="nc bnc" id="L30" title="All 2 branches missed.">        for (Controller c : controllers) {</span>
-<span class="nc" id="L31">            c.mapEndpoints(app);</span>
+<span class="nc bnc" id="L27" title="All 2 branches missed.">        for (Controller c : controllers) {</span>
+<span class="nc" id="L28">            c.mapEndpoints(app);</span>
         }
-<span class="nc" id="L33">    }</span>
+<span class="nc" id="L30">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

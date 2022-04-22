@@ -16,6 +16,7 @@ public class AuthenticationController implements Controller {
     private UserService userService;
     private JWTService jwtService;
 
+
     public AuthenticationController() {
         this.userService = new UserService();
         this.jwtService = new JWTService();

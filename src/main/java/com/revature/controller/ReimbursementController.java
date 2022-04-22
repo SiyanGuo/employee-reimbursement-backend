@@ -19,7 +19,8 @@ public class ReimbursementController implements Controller{
 
     private JWTService jwtService;
     private ReimbursementService reimbursementService;
-
+    private static final String loginMsg = "You must be logged in to access this endpoint";
+    private static final String authorization = "Authorization";
 
     public ReimbursementController() {
         this.jwtService = new JWTService();
@@ -28,10 +29,10 @@ public class ReimbursementController implements Controller{
 
     private Handler getAllReimbursements = ctx ->{
 
-        if(ctx.header("Authorization")==null) {
-            throw new UnauthorizedResponse("You must be logged in to access this endpoint");
+        if(ctx.header(authorization)==null) {
+            throw new UnauthorizedResponse(loginMsg);
         }
-        String jwt = ctx.header("Authorization").split(" ")[1];
+        String jwt = ctx.header(authorization).split(" ")[1];
         Jws<Claims> token = this.jwtService.parseJwt(jwt);
 
         this.jwtService.verifyManager(token);
@@ -41,10 +42,10 @@ public class ReimbursementController implements Controller{
     };
 
     private Handler resolveReimbursement = ctx ->{
-        if(ctx.header("Authorization")==null) {
-            throw new UnauthorizedResponse("You must be logged in to access this endpoint");
+        if(ctx.header(authorization)==null) {
+            throw new UnauthorizedResponse(loginMsg);
         }
-        String jwt = ctx.header("Authorization").split(" ")[1];
+        String jwt = ctx.header(authorization).split(" ")[1];
 
         Jws<Claims> token = this.jwtService.parseJwt(jwt);
 
@@ -59,10 +60,10 @@ public class ReimbursementController implements Controller{
     };
 
     private Handler getSpecificEmployeeReimbursements = ctx ->  {
-        if(ctx.header("Authorization")==null) {
-            throw new UnauthorizedResponse("You must be logged in to access this endpoint");
+        if(ctx.header(authorization)==null) {
+            throw new UnauthorizedResponse(loginMsg);
         }
-        String jwt = ctx.header("Authorization").split(" ")[1];
+        String jwt = ctx.header(authorization).split(" ")[1];
         Jws<Claims> token = this.jwtService.parseJwt(jwt);
         String userId = ctx.pathParam("user_id");
 
@@ -82,10 +83,10 @@ public class ReimbursementController implements Controller{
     };
 
     private Handler addReimbursement = ctx ->{
-        if(ctx.header("Authorization")==null) {
-            throw new UnauthorizedResponse("You must be logged in to access this endpoint");
+        if(ctx.header(authorization)==null) {
+            throw new UnauthorizedResponse(loginMsg);
         }
-        String jwt = ctx.header("Authorization").split(" ")[1];
+        String jwt = ctx.header(authorization).split(" ")[1];
         Jws<Claims> token = this.jwtService.parseJwt(jwt);
         String userId = ctx.pathParam("user_id");
 

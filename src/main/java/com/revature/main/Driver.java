@@ -15,12 +15,9 @@ public class Driver {
 
     public static void main(String[] args) {
 
-        Javalin app = Javalin.create((config) -> {
-            config.enableCorsForAllOrigins();
-        });
-        app.before((ctx) -> {
-            logger.info(ctx.method() + " request received for " + ctx.path());
-        });
+        Javalin app = Javalin.create(config -> config.enableCorsForAllOrigins());
+        app.before(ctx -> logger.info(ctx.method() + " request received for " + ctx.path()));
+
         mapControllers(app, new AuthenticationController(), new ReimbursementController(), new ExceptionController());
 
         app.start(8081);
